@@ -1,16 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.Office.Interop.Excel;
-using System.Diagnostics;
-using System.Reflection;
-using System.Collections;
 using Excel;
 using System.IO;
+using System.IO.Compression;
 using System.Data;
 using System.Data.SqlClient;
+using System.Text;
 
 namespace xlsxToSql
 {
@@ -24,10 +18,57 @@ namespace xlsxToSql
         }
     }
 
+    class ZipParser
+    {
+        private string default_extract_path = @"C:\user\document\ZipRelease";
+
+        //https://msdn.microsoft.com/zh-cn/library/system.io.filestream(v=vs.110).aspx
+        public void copyFile(string source_path,string destination_path)
+        {
+            using (FileStream read_stream = File.Open(source_path, FileMode.Open))
+            {
+                if(!File.Exists(destination_path))
+                {
+                    using (FileStream write_stream = File.Create(destination_path))
+                    {
+                        
+
+                        byte[] buffer = new byte[1024];
+                        while(read_stream.Read(buffer,0,buffer.Length) > 0)
+                        {
+                            write_stream.Write(buffer, 0, buffer.Length);
+                        }
+                        
+                    }
+                }
+            }
+        }
+
+        //https://msdn.microsoft.com/zh-cn/library/ms404280(v=vs.110).aspx
+        public void extract_file(string source_path, string destination_path)
+        {
+            using (ZipArchive archive = ZipFile.OpenRead(source_path))
+            {
+                foreach (ZipArchiveEntry entry in archive.Entries)
+                {
+                    if (entry.FullName.EndsWith(".xlsx"))
+                    {
+                        entry.ExtractToFile(Path.Combine(destination_path, entry.FullName));
+                    }
+                }
+            }
+        }
+    }
+
+
     class ParserXlsx
     {
         private string Server_Name = "(local)";
         private string DB_Name = "Excel_DB";
+
+
+        
+
 
 
         public void OpenExcel(String strFileName)
